@@ -1,0 +1,16 @@
+.gradle/
+build/
+out/
+.idea/
+*.iml
+# RuneChronicle private/local user data
+.runechronicle/
+events.json
+schema-version.txt
+RuneChronicle-backup-*.json
+
+# Additional local development files
+.vscode/
+*.class
+.DS_Store
+Thumbs.db

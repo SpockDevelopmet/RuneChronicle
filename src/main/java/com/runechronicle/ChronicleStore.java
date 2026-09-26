@@ -2,6 +2,7 @@ package com.runechronicle;
 
 import com.google.gson.*;
 import com.google.gson.reflect.TypeToken;
+import javax.inject.Inject;
 import java.io.*;
 import java.lang.reflect.Type;
 import java.nio.file.*;
@@ -16,7 +17,9 @@ final class ChronicleStore {
   Event(long ts,String profileId,String sessionId,String type,String title,String detail,long amount,String source,long value,int itemId,int quantity){this.ts=ts;this.profileId=profileId;this.sessionId=sessionId;this.type=type;this.title=title;this.detail=detail;this.amount=amount;this.source=source;this.value=value;this.itemId=itemId;this.quantity=quantity;}
  }
  private static final Type LIST_TYPE=new TypeToken<List<Event>>(){}.getType();
- private final Gson gson=new GsonBuilder().setPrettyPrinting().create();
+ private final Gson gson;
+ @Inject
+ ChronicleStore(Gson gson){this.gson=gson.newBuilder().setPrettyPrinting().create();}
  private final Path dir=Paths.get(System.getProperty("user.home"),".runechronicle"),file=dir.resolve("events.json"),versionFile=dir.resolve("schema-version.txt");
  private final List<Event> events=new ArrayList<>();
  synchronized void load(){try{Files.createDirectories(dir);if(Files.exists(file)){try(Reader r=Files.newBufferedReader(file)){List<Event>x=gson.fromJson(r,LIST_TYPE);if(x!=null)events.addAll(x);}}Files.write(versionFile,Integer.toString(SCHEMA_VERSION).getBytes());}catch(Exception ignored){}}

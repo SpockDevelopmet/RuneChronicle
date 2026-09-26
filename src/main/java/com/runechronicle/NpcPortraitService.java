@@ -31,7 +31,7 @@ import okhttp3.Response;
 final class NpcPortraitService
 {
     private static final String API = "https://oldschool.runescape.wiki/api.php?action=query&format=json&prop=pageimages&pithumbsize=128&redirects=1&titles=";
-    private static final String UA = "RuneChronicle/0.7.0 (RuneLite Plugin Hub)";
+    private static final String UA = "RuneChronicle/0.7.1 (RuneLite Plugin Hub)";
     private final OkHttpClient http;
     private final Gson gson;
     private final Map<String, ImageIcon> cache = new ConcurrentHashMap<>();

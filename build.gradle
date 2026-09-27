@@ -7,7 +7,7 @@ dependencies {
     testImplementation 'junit:junit:4.13.2'
 }
 group = 'com.runechronicle'
-version = '0.7.1'
+version = '0.8.0'
 tasks.withType(JavaCompile).configureEach { options.encoding='UTF-8'; options.release.set(11) }
 def pluginMainClass='com.runechronicle.RuneChroniclePluginTest'
 tasks.register('run', JavaExec) {

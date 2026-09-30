@@ -5,7 +5,7 @@ import net.runelite.client.config.*;
 @ConfigGroup("runechronicle")
 public interface RuneChronicleConfig extends Config {
  @ConfigSection(name="Journal", description="Choose what RuneChronicle records", position=0) String journal="journal";
- @ConfigSection(name="Loot", description="Control claimed-loot logging", position=1) String loot="loot";
+ @ConfigSection(name="Loot", description="Control claimed-loot logging. The value filter can intentionally exclude lower-value drops from the Chronicle.", position=1) String loot="loot";
  @ConfigSection(name="Recap", description="Control the Session Recap experience", position=2) String recap="recap";
  @ConfigItem(keyName="logMonsterKills", name="Monster kills", description="Record attributed monster kills", position=0, section=journal) default boolean logMonsterKills(){return true;}
  @ConfigItem(keyName="logBossKills", name="Bosses defeated", description="Promote recognized boss kills into their own Bosses Defeated section", position=1, section=journal) default boolean logBossKills(){return true;}
@@ -13,7 +13,7 @@ public interface RuneChronicleConfig extends Config {
  @ConfigItem(keyName="logGameMilestones", name="Milestones", description="Record quests, collection log, combat achievements, PBs, pets and clues when observable", position=3, section=journal) default boolean logGameMilestones(){return true;}
  @ConfigItem(keyName="logDeaths", name="Deaths", description="Record player deaths in the Chronicle", position=4, section=journal) default boolean logDeaths(){return true;}
  @ConfigItem(keyName="logLoot", name="Claimed loot", description="Record loot after RuneChronicle observes it enter your inventory or a supported reward interface awards it", position=0, section=loot) default boolean logLoot(){return true;}
- @Range(min=0,max=2000000000) @ConfigItem(keyName="minimumGeValue", name="Minimum GE value", description="0 disables the GE threshold", position=1, section=loot) default int minimumGeValue(){return 500000;}
+ @Range(min=0,max=2000000000) @ConfigItem(keyName="minimumGeValue", name="Minimum GE value", description="Loot below this GE value can be excluded from the normal Chronicle. Default: 1 gp. Set 0 to disable the GE threshold.", position=1, section=loot) default int minimumGeValue(){return 1;}
  @Range(min=0,max=2000000000) @ConfigItem(keyName="minimumHaValue", name="Minimum high alch value", description="0 disables the high-alch threshold", position=2, section=loot) default int minimumHaValue(){return 0;}
  @ConfigItem(keyName="lootValueRule", name="Value rule", description="How GE and high-alch thresholds qualify loot", position=3, section=loot) default LootValueRule lootValueRule(){return LootValueRule.GE_OR_HA;}
  @ConfigItem(keyName="useStackValue", name="Use whole stack value", description="Apply thresholds to unit value × quantity", position=4, section=loot) default boolean useStackValue(){return true;}

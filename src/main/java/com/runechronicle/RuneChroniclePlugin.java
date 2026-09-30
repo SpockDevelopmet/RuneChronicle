@@ -89,7 +89,23 @@ public class RuneChroniclePlugin extends Plugin {
   while(it.hasNext()&&recovered<gained){PendingRecoveryAction a=it.next();if(now-a.ts>5){it.remove();continue;}if(a.itemId!=itemId)continue;it.remove();recovered++;recordRecoveredSupply(itemId,1);}
   return recovered;
  }
- @Subscribe public void onItemContainerChanged(ItemContainerChanged e){if(!trackingActive)return;ItemContainer c=e.getItemContainer();if(c==null)return;if(e.getContainerId()==InventoryID.INVENTORY.getId()){Map<Integer,Integer> now=counts(c);Set<Integer> ids=new HashSet<>(inventory.keySet());ids.addAll(now.keySet());for(int id:ids){int old=inventory.getOrDefault(id,0),cur=now.getOrDefault(id,0),delta=cur-old;if(delta>0){if(config.logLoot())claim(id,delta);consumePendingRecovery(id,delta);}else if(delta<0&&!isAmmo(id))consumePendingSupply(id,-delta);}inventory.clear();inventory.putAll(now);}else if(e.getContainerId()==InventoryID.EQUIPMENT.getId()){Map<Integer,Integer> now=counts(c);Set<Integer> ids=new HashSet<>(equipment.keySet());ids.addAll(now.keySet());for(int id:ids){int used=equipment.getOrDefault(id,0)-now.getOrDefault(id,0);if(used>0&&used<=5&&isAmmo(id)&&shouldTrackSupply(id))recordSupplyUse(id,used);}equipment.clear();equipment.putAll(now);}}
+ private boolean hasPendingLootFor(int itemId){
+  long now=ChronicleStore.now();
+  for(PendingLoot p:pendingLoot)if(p.itemId==itemId&&p.remaining>0&&now-p.ts<=CLAIM_WINDOW)return true;
+  return false;
+ }
+ private boolean bankOpen(){
+  try{return client.getWidget(WidgetInfo.BANK_ITEM_CONTAINER)!=null;}catch(Exception ignored){return false;}
+ }
+ private void recoverAmmoFromInventoryGain(int itemId,int gained){
+  if(!expeditionActive||gained<=0||!isAmmo(itemId)||bankOpen()||hasPendingLootFor(itemId))return;
+  long used=expeditionUsed.getOrDefault(itemId,0L);
+  long recovered=expeditionRecovered.getOrDefault(itemId,0L);
+  long room=Math.max(0L,used-recovered);
+  if(room<=0)return;
+  recordRecoveredSupply(itemId,(int)Math.min((long)gained,room));
+ }
+ @Subscribe public void onItemContainerChanged(ItemContainerChanged e){if(!trackingActive)return;ItemContainer c=e.getItemContainer();if(c==null)return;if(e.getContainerId()==InventoryID.INVENTORY.getId()){Map<Integer,Integer> now=counts(c);Set<Integer> ids=new HashSet<>(inventory.keySet());ids.addAll(now.keySet());for(int id:ids){int old=inventory.getOrDefault(id,0),cur=now.getOrDefault(id,0),delta=cur-old;if(delta>0){boolean wasPendingLoot=hasPendingLootFor(id);if(config.logLoot())claim(id,delta);int confirmed=consumePendingRecovery(id,delta);if(confirmed==0&&!wasPendingLoot)recoverAmmoFromInventoryGain(id,delta);}else if(delta<0&&!isAmmo(id))consumePendingSupply(id,-delta);}inventory.clear();inventory.putAll(now);}else if(e.getContainerId()==InventoryID.EQUIPMENT.getId()){Map<Integer,Integer> now=counts(c);Set<Integer> ids=new HashSet<>(equipment.keySet());ids.addAll(now.keySet());for(int id:ids){int old=equipment.getOrDefault(id,0),cur=now.getOrDefault(id,0),delta=cur-old;if(delta<0&&-delta<=5&&isAmmo(id)&&shouldTrackSupply(id))recordSupplyUse(id,-delta);else if(delta>0)recoverAmmoFromInventoryGain(id,delta);}equipment.clear();equipment.putAll(now);}}
  private void claim(int itemId,int gained){long now=ChronicleStore.now();for(PendingLoot p:new ArrayList<>(pendingLoot)){if(gained<=0)break;if(p.itemId!=itemId||p.remaining<=0||now-p.ts>CLAIM_WINDOW)continue;int q=Math.min(gained,p.remaining);p.remaining-=q;gained-=q;recordAwardedLoot(p.source,itemId,q,false);}pendingLoot.removeIf(x->x.remaining<=0);}
  private void recordAwardedLoot(String source,int id,int q,boolean special){ItemComposition c=itemManager.getItemComposition(id);String name=c==null?("Item "+id):c.getName();long ge=Math.max(0L,itemManager.getItemPrice(id));long ha=c==null?0L:Math.max(0,c.getHaPrice());long geTotal=(long)ge*q,haTotal=(long)ha*q;long geCheck=config.useStackValue()?geTotal:ge,haCheck=config.useStackValue()?haTotal:ha;if(!expeditionActive&&!(special&&config.alwaysLogSpecial())&&!qualifies(geCheck,haCheck))return;String detail=(q>1?q+" × ":"")+name+"  •  GE "+gp(geTotal)+"  •  HA "+gp(haTotal);ChronicleStore.Event ev=new ChronicleStore.Event(ChronicleStore.now(),profile,sessionId,"LOOT",name,detail,geTotal,source,geTotal,id,q);ev.haValue=haTotal;ev.category=special?"Reward Loot":"Claimed Loot";if(expeditionActive)ev.expeditionId=expeditionId;store.add(ev);}
  private boolean qualifies(long ge,long ha){int g=config.minimumGeValue(),h=config.minimumHaValue();switch(config.lootValueRule()){case GE_ONLY:return g==0||ge>=g;case HA_ONLY:return h==0||ha>=h;case GE_AND_HA:return (g==0||ge>=g)&&(h==0||ha>=h);default:return (g==0&&h==0)||(g>0&&ge>=g)||(h>0&&ha>=h);}}

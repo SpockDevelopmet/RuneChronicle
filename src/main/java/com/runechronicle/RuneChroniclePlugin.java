@@ -25,7 +25,7 @@ import net.runelite.client.plugins.PluginDescriptor;
 import net.runelite.client.plugins.loottracker.LootReceived;
 import net.runelite.client.ui.*;
 import net.runelite.client.ui.overlay.OverlayManager;
-import net.runelite.api.widgets.WidgetInfo;
+import net.runelite.api.gameval.InterfaceID;
 import net.runelite.client.util.ImageUtil;
 import net.runelite.client.util.Filepath;
 import net.runelite.client.util.Text;
@@ -95,7 +95,7 @@ public class RuneChroniclePlugin extends Plugin {
   return false;
  }
  private boolean bankOpen(){
-  try{return client.getWidget(WidgetInfo.BANK_ITEM_CONTAINER)!=null;}catch(Exception ignored){return false;}
+  try{return client.getWidget(InterfaceID.Bankmain.ITEMS)!=null;}catch(Exception ignored){return false;}
  }
  private void recoverAmmoFromInventoryGain(int itemId,int gained){
   if(!expeditionActive||gained<=0||!isAmmo(itemId)||bankOpen()||hasPendingLootFor(itemId))return;

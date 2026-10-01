@@ -48,9 +48,8 @@ final class ChronicleStore {
   synchronized(this){if(revision==captured)dirty=false;}
  }
  private <T> T awaitWrite(Callable<T> action) throws IOException {
-  try{return writer.submit(action).get();}
-  catch(InterruptedException ex){Thread.currentThread().interrupt();throw new IOException("Chronicle persistence interrupted",ex);}
-  catch(ExecutionException ex){throw new IOException("Chronicle persistence failed",ex.getCause());}
+  try{return CompletableFuture.supplyAsync(()->{try{return action.call();}catch(Exception ex){throw new CompletionException(ex);}},writer).join();}
+  catch(CompletionException ex){throw new IOException("Chronicle persistence failed",ex.getCause());}
   catch(RejectedExecutionException ex){throw new IOException("Chronicle store is closed",ex);}
  }
  void save(){try{awaitWrite(()->{writeSnapshot();return null;});}catch(IOException ex){LOG.log(Level.WARNING,"Unable to persist Chronicle events",ex);}}
